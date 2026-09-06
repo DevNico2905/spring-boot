@@ -1,8 +1,6 @@
 package org.devnico;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -10,20 +8,24 @@ import java.util.List;
 @RequestMapping("api/v1/software-engineers")
 public class SoftwareEngineerController {
 
-    @GetMapping
-    public List<SoftwareEngineer> getAll(){
-        return List.of(
-                new SoftwareEngineer(
-                        1,
-                        "James",
-                        "Java, Spring, Angular, Tailwind"
-                ),
-                new SoftwareEngineer(
-                        2,
-                        "Nick",
-                        "Node, React"
-                )
-        );
+    private final SoftwareEngineerService sweService;
+
+    public SoftwareEngineerController(SoftwareEngineerService sweService) {
+        this.sweService = sweService;
     }
 
+    @GetMapping
+    public List<SoftwareEngineer> getAll(){
+        return sweService.getAll();
+    }
+
+    @PostMapping
+    public void saveSwe(@RequestBody SoftwareEngineer newSwe){
+        sweService.AddNewSwe(newSwe);
+    }
+
+    @GetMapping("/{id}")
+    public SoftwareEngineer getById(@PathVariable Integer id){
+        return sweService.getById(id);
+    }
 }
