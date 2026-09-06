@@ -9,7 +9,7 @@
 
 ### Descripción
 
-API REST básica construida con Spring Boot que expone una lista de ingenieros de software. Incluye una entidad JPA (`SoftwareEngineer`), un controlador REST y una base de datos PostgreSQL levantada con Docker Compose.
+API REST construida con Spring Boot siguiendo una arquitectura en capas (**Controller → Service → Repository**) sobre una entidad JPA (`SoftwareEngineer`), persistida en PostgreSQL y levantada con Docker Compose. Permite listar, crear y consultar ingenieros de software por ID.
 
 ### Stack tecnológico
 
@@ -32,11 +32,13 @@ spring-boot/
 └── src/
     ├── main/
     │   ├── java/org/devnico/
-    │   │   ├── Application.java                  # Clase principal + endpoint "Hello World"
-    │   │   ├── SoftwareEngineer.java              # Entidad JPA
-    │   │   └── SoftwareEngineerController.java    # Controlador REST
+    │   │   ├── Application.java                     # Clase principal + endpoint "Hello World"
+    │   │   ├── SoftwareEngineer.java                 # Entidad JPA
+    │   │   ├── SoftwareEngineerController.java       # Controlador REST (capa web)
+    │   │   ├── SoftwareEngineerService.java          # Lógica de negocio (capa de servicio)
+    │   │   └── SoftwareEngineerRepository.java       # Acceso a datos (JpaRepository)
     │   └── resources/
-    │       └── application.properties             # Configuración de la app y la BD
+    │       └── application.properties                # Configuración de la app y la BD
     └── test/
         └── java/org/devnico/ApplicationTests.java # Test de contexto de Spring
 ```
@@ -106,12 +108,45 @@ spring.jpa.hibernate.ddl-auto=create-drop
 
 `ddl-auto=create-drop` significa que Hibernate crea las tablas al iniciar la app y las elimina al detenerla — útil para desarrollo, no usar en producción.
 
+### Arquitectura
+
+El proyecto sigue una arquitectura en capas típica de Spring Boot:
+
+```
+SoftwareEngineerController  (capa web: recibe requests HTTP)
+        │
+        ▼
+SoftwareEngineerService     (lógica de negocio)
+        │
+        ▼
+SoftwareEngineerRepository  (JpaRepository → acceso a datos)
+        │
+        ▼
+PostgreSQL
+```
+
 ### Endpoints disponibles
 
-| Método | Ruta                              | Descripción                              |
-|--------|-----------------------------------|-------------------------------------------|
-| GET    | `/`                                | Devuelve un saludo de prueba              |
-| GET    | `/api/v1/software-engineers`      | Devuelve una lista de ingenieros de software (datos hardcodeados) |
+| Método | Ruta                               | Body                                     | Descripción                                          |
+|--------|--------------------------------------|-------------------------------------------|--------------------------------------------------------|
+| GET    | `/`                                    | —                                           | Devuelve un saludo de prueba                            |
+| GET    | `/api/v1/software-engineers`          | —                                           | Lista todos los ingenieros de software (desde la BD)   |
+| GET    | `/api/v1/software-engineers/{id}`     | —                                           | Busca un ingeniero por ID                               |
+| POST   | `/api/v1/software-engineers`          | `{ "name": "...", "techStack": "..." }`     | Crea un nuevo ingeniero de software                     |
+
+Ejemplo de creación (ver también `Request.http`):
+
+```http
+POST http://localhost:8080/api/v1/software-engineers
+Content-Type: application/json
+
+{
+  "name": "Nick",
+  "techStack": "Java, Spring-Boot"
+}
+```
+
+> Nota: `getById` lanza una `RuntimeException` genérica si el ID no existe (aún no hay un `@ExceptionHandler` que devuelva un 404 propiamente).
 
 ### Créditos
 
@@ -123,7 +158,7 @@ Proyecto creado como ejercicio de aprendizaje siguiendo el curso de YouTube: [Sp
 
 ### Description
 
-Basic REST API built with Spring Boot that exposes a list of software engineers. It includes a JPA entity (`SoftwareEngineer`), a REST controller, and a PostgreSQL database spun up with Docker Compose.
+REST API built with Spring Boot following a layered architecture (**Controller → Service → Repository**) on top of a JPA entity (`SoftwareEngineer`), persisted in PostgreSQL and spun up with Docker Compose. It supports listing, creating, and looking up software engineers by ID.
 
 ### Tech stack
 
@@ -146,11 +181,13 @@ spring-boot/
 └── src/
     ├── main/
     │   ├── java/org/devnico/
-    │   │   ├── Application.java                  # Main class + "Hello World" endpoint
-    │   │   ├── SoftwareEngineer.java              # JPA entity
-    │   │   └── SoftwareEngineerController.java    # REST controller
+    │   │   ├── Application.java                     # Main class + "Hello World" endpoint
+    │   │   ├── SoftwareEngineer.java                 # JPA entity
+    │   │   ├── SoftwareEngineerController.java       # REST controller (web layer)
+    │   │   ├── SoftwareEngineerService.java          # Business logic (service layer)
+    │   │   └── SoftwareEngineerRepository.java       # Data access (JpaRepository)
     │   └── resources/
-    │       └── application.properties             # App and DB configuration
+    │       └── application.properties                # App and DB configuration
     └── test/
         └── java/org/devnico/ApplicationTests.java # Spring context test
 ```
@@ -220,12 +257,45 @@ spring.jpa.hibernate.ddl-auto=create-drop
 
 `ddl-auto=create-drop` means Hibernate creates the tables on startup and drops them on shutdown — handy for development, not for production.
 
+### Architecture
+
+The project follows a typical Spring Boot layered architecture:
+
+```
+SoftwareEngineerController  (web layer: handles HTTP requests)
+        │
+        ▼
+SoftwareEngineerService     (business logic)
+        │
+        ▼
+SoftwareEngineerRepository  (JpaRepository → data access)
+        │
+        ▼
+PostgreSQL
+```
+
 ### Available endpoints
 
-| Method | Path                               | Description                                   |
-|--------|-------------------------------------|------------------------------------------------|
-| GET    | `/`                                  | Returns a test greeting                        |
-| GET    | `/api/v1/software-engineers`        | Returns a list of software engineers (hardcoded data) |
+| Method | Path                                | Body                                       | Description                                       |
+|--------|---------------------------------------|----------------------------------------------|-----------------------------------------------------|
+| GET    | `/`                                     | —                                              | Returns a test greeting                             |
+| GET    | `/api/v1/software-engineers`           | —                                              | Lists all software engineers (from the DB)          |
+| GET    | `/api/v1/software-engineers/{id}`      | —                                              | Looks up a software engineer by ID                  |
+| POST   | `/api/v1/software-engineers`           | `{ "name": "...", "techStack": "..." }`        | Creates a new software engineer                     |
+
+Example request (also see `Request.http`):
+
+```http
+POST http://localhost:8080/api/v1/software-engineers
+Content-Type: application/json
+
+{
+  "name": "Nick",
+  "techStack": "Java, Spring-Boot"
+}
+```
+
+> Note: `getById` throws a generic `RuntimeException` when the ID doesn't exist (there's no dedicated `@ExceptionHandler` yet to return a proper 404).
 
 ### Credits
 
